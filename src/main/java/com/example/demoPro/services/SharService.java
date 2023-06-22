@@ -2,13 +2,16 @@ package com.example.demoPro.services;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demoPro.entities.FileProcessingRequest;
 import com.example.demoPro.entities.Message;
@@ -17,31 +20,33 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class SharService {
-	public Map<Integer, Integer> processData(MultipartFile file, FileProcessingRequest fr) {
+	public Map<Integer, Integer> processData(FileProcessingRequest fr) {
         try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()));
-            String line;
-            List<String> lines = new ArrayList<>();
-            while ((line = reader.readLine()) != null) {
-                lines.add(line);
-            }
-            reader.close();
-            System.out.println(lines.size());
-            Map<Integer, Integer> deviceMessageCounts = new HashMap<>();
-            for (String line1 : lines) {
-                System.out.println("hello");
-                if (!line1.isEmpty()) {
-                    Message message = parseJsonMessage(line1);
-                    if (message != null && fr.getDeviceIds().contains(message.getDeviceId())) {
-                        long msgTime = message.getMsgTime();
-                        if (msgTime >= fr.getStartTime() && msgTime <= fr.getStartTime()) {
-                            // Increment message count for the device
-                            deviceMessageCounts.put(message.getDeviceId(),
-                                    deviceMessageCounts.getOrDefault(message.getDeviceId(), 0) + 1);
-                        }
-                    }
-                }
-            }
+        	List<Path> files = Files.walk(Paths.get("C:/inputs"))
+                    .filter(Files::isRegularFile)
+                    .collect(Collectors.toList());
+        	System.out.println(files);
+        	Map<Integer, Integer> deviceMessageCounts = new HashMap<>();
+        	for(Path file:files)
+        	{
+        		 List<String> lines = Files.readAllLines(file);
+                 for (String line : lines) {
+                     // Parse the JSON message
+                	 if(!line.isEmpty())
+                	 {
+                     Message message = parseJsonMessage(line);
+                     if (message != null && fr.getDeviceIds().contains(message.getDeviceId())) {
+                         long msgTime = message.getMsgTime();
+                         if (msgTime >= fr.getStartTime() && msgTime <= fr.getEndTime()) {
+                             // Increment message count for the device
+                             deviceMessageCounts.put(message.getDeviceId(),
+                                     deviceMessageCounts.getOrDefault(message.getDeviceId(), 0) + 1);
+                         }
+                     }
+                     }
+                 }
+        	}
+           
             return deviceMessageCounts;
         } catch (Exception e) {
             e.printStackTrace();

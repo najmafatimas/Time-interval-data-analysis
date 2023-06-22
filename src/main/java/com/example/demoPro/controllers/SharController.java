@@ -7,26 +7,41 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demoPro.entities.FileProcessingRequest;
-import com.example.demoPro.entities.Message;
 import com.example.demoPro.services.SharService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RestController
 public class SharController {
 
+//	@PostConstruct
+//	public void load()
+//	{
+//		long timestamp = 1676048647;
+//
+//        // Convert the timestamp to Instant
+//        Instant instant = Instant.ofEpochMilli(timestamp);
+//
+//        // Convert Instant to LocalDateTime in UTC
+//        LocalDateTime utcDateTime = LocalDateTime.ofInstant(instant, ZoneId.of("UTC"));
+//
+//        // Format the UTC datetime
+//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+//        String formattedDateTime = formatter.format(utcDateTime);
+//
+//        System.out.println("UTC Date and Time: " + formattedDateTime);
+//	}
 	@Autowired
 	private SharService sharService;
 
 	@PostMapping(value=
-			"/processData",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> processData(@RequestPart MultipartFile file,@RequestPart FileProcessingRequest fr) {
-		 Map<Integer, Integer> deviceMessageCounts = sharService.processData(file, fr);
+			"/processData")
+    public ResponseEntity<?> processData(@RequestBody FileProcessingRequest fr) {
+		 Map<Integer, Integer> deviceMessageCounts = sharService.processData(fr);
 	        if (deviceMessageCounts != null) {
 	            return ResponseEntity.ok(deviceMessageCounts);
 	        } else {
