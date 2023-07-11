@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.example.demoPro.entities.FileProcessingRequest;
@@ -20,9 +21,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class SharService {
+	
+	@Value("${file.directory}")
+	String fileDire;
 	public Map<Integer, Integer> processData(FileProcessingRequest fr) {
         try {
-        	List<Path> files = Files.walk(Paths.get("C:/inputs"))
+        	System.out.println(fileDire);
+        	List<Path> files = Files.walk(Paths.get(fileDire))
                     .filter(Files::isRegularFile)
                     .collect(Collectors.toList());
         	System.out.println(files);
@@ -31,10 +36,10 @@ public class SharService {
         	{
         		 List<String> lines = Files.readAllLines(file);
                  for (String line : lines) {
-                     // Parse the JSON message
                 	 if(!line.isEmpty())
                 	 {
                      Message message = parseJsonMessage(line);
+                     System.out.println(message);
                      if (message != null && fr.getDeviceIds().contains(message.getDeviceId())) {
                          long msgTime = message.getMsgTime();
                          if (msgTime >= fr.getStartTime() && msgTime <= fr.getEndTime()) {
@@ -42,15 +47,35 @@ public class SharService {
                              deviceMessageCounts.put(message.getDeviceId(),
                                      deviceMessageCounts.getOrDefault(message.getDeviceId(), 0) + 1);
                          }
-                     }
+                         else if(deviceMessageCounts==null && deviceMessageCounts.get(message.getDeviceId())==0)
+                         {
+                        	 
+                        	 deviceMessageCounts.put(message.getDeviceId(),0);
+                         }
+                        
+                       
+                    
                      }
                  }
         	}
-           
-            return deviceMessageCounts;
-        } catch (Exception e) {
+        	}
+//          for(Integer i:fr.getDeviceIds())
+//          {
+//        	  
+//        	  if(!deviceMessageCounts.containsKey(i))
+//        	  {
+//        		  deviceMessageCounts.put(i,0);
+//        	  }
+//        	  
+//          }
+        	for (Integer deviceId : fr.getDeviceIds()) {
+                deviceMessageCounts.putIfAbsent(deviceId, 0);
+            }
+       return deviceMessageCounts;
+        
+        }
+        	catch (Exception e) {
             e.printStackTrace();
-            // Replace with appropriate error handling mechanism, such as throwing a custom exception or returning an error response.
             return null;
         }
     }
